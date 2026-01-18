@@ -2,86 +2,90 @@ import random
 import time
 import string
 import sys
+import base64
 import os
 
 def clear_screen():
     os.system('cls' if os.name == 'nt' else 'clear')
 
+def get_target_flag():
+    # The flag is obfuscated here so it cannot be read directly from the source code.
+    # It is decoded only when the script runs.
+    # Base64 for "esch{this_aint_it_mate}"
+    obfuscated_data = "ZXNjaHt0aGlzX2FpbnRfaXRfbWF0ZX0="
+    
+    # Decode to bytes, then to string
+    return base64.b64decode(obfuscated_data).decode('utf-8')
+
 def generate_random_char():
-    # Use a mix of letters, numbers, and punctuation for the "matrix" look
+    # Generates a random character for the "glitch" effect
     return random.choice(string.ascii_letters + string.digits + "!@#$%^&*()_+-=[]{}|;':,./<>?")
 
 def main():
-    target_flag = "esch{this_aint_it_mate}"
+    # 1. Decode the flag silently in the background
+    target_flag = get_target_flag()
     
-    # "Encryption" phase: Start with a string of random garbage the same length as the flag
+    # 2. Setup the animation variables
+    # We start with a list of random characters equal to the flag's length
     current_display = [generate_random_char() for _ in range(len(target_flag))]
-    
-    # Indices we have successfully solved
     solved_indices = []
 
+    # 3. Intro Sequence
     clear_screen()
-    print("\n" * 5)
-    print("ESTABLISHING SECURE CONNECTION...".center(80))
+    print("\n" * 2)
+    print(" [ SYSTEM ALERT ] : ENCRYPTED PACKET DETECTED")
+    time.sleep(0.8)
+    print(" [ ... ] : INITIATING BRUTE FORCE DECRYPTION...")
     time.sleep(1.0)
-    
-    print("INTERCEPTING PACKET...".center(80))
-    time.sleep(1.0)
-
-    print("DECRYPTING DATA STREAM:".center(80))
     print("\n")
 
-    # Animation Loop
-    # We run enough iterations to solve the whole string
-    # We want it to look like it's "finding" the characters
-    
+    # 4. The Decryption Loop
+    # Keep looping until we have solved every character index
     while len(solved_indices) < len(target_flag):
         
-        # 1. Update the display string
+        # Update every character in the display
         for i in range(len(target_flag)):
             if i in solved_indices:
-                # If it's solved, keep it as the correct char
+                # If we've already cracked this letter, keep it correct
                 current_display[i] = target_flag[i]
             else:
-                # If not solved, generate a new random char (the glitch effect)
+                # If not, show a random glitch character
                 current_display[i] = generate_random_char()
 
-        # 2. Randomly "solve" a new character occasionally
-        # This controls the speed of the reveal. 
-        if random.random() > 0.8: # 20% chance to solve a letter per frame
-            # Find a list of unsolved indices
-            remaining = [x for x in range(len(target_flag)) if x not in solved_indices]
-            if remaining:
-                # Pick one random index to "lock in"
-                new_solve = random.choice(remaining)
-                solved_indices.append(new_solve)
-                current_display[new_solve] = target_flag[new_solve]
+        # Randomly "crack" a new character
+        # 15% chance per frame to find a correct letter
+        if random.random() > 0.85: 
+            unsolved = [x for x in range(len(target_flag)) if x not in solved_indices]
+            if unsolved:
+                new_index = random.choice(unsolved)
+                solved_indices.append(new_index)
+                current_display[new_index] = target_flag[new_index]
 
-        # 3. Construct the frame
-        # We put it in a box to make it look like a UI
-        border_top = "+" + "-" * (len(target_flag) + 4) + "+"
-        border_bot = "+" + "-" * (len(target_flag) + 4) + "+"
+        # 5. Render the Frame
+        output_string = "".join(current_display)
         
-        content = "".join(current_display)
+        # UI Formatting
+        border = "=" * (len(target_flag) + 4)
         
-        # 4. Print Frame (Overwrite previous line to animate)
-        # Using carriage return \r to stay on the same line mostly, but clear screen is safer for large boxes
-        sys.stdout.write(f"\r     {border_top}     \n")
-        sys.stdout.write(f"     |  {content}  |     \n")
-        sys.stdout.write(f"     {border_bot}     ")
+        # ANSI Escape Codes to overwrite the previous lines
+        sys.stdout.write(f"\r    +{border}+\n")
+        sys.stdout.write(f"    |  {output_string}  |\n")
+        sys.stdout.write(f"    +{border}+")
         
-        # Move cursor up 2 lines so we overwrite next time
-        sys.stdout.write("\033[F" * 2) 
+        # Move cursor up 2 lines to prepare for next overwrite
+        sys.stdout.write("\033[F" * 2)
+        sys.stdout.flush()
         
-        time.sleep(0.05) # Speed of the glitch
+        # Animation speed
+        time.sleep(0.05)
 
-    # Final Clean Print to ensure it stays on screen
+    # 6. Final Clean Output
+    # Move cursor down past the animation
     print("\n" * 3)
-    print("ACCESS GRANTED.".center(40))
-    print("\n")
+    print(" [ SUCCESS ] : FLAG CAPTURED.\n")
 
 if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("\nAborted.")
+        print("\n\n[!] Decryption Aborted.")
